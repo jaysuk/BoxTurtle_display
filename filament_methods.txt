@@ -1,0 +1,46 @@
+// Filament List Management
+void NetworkManager::fetchFilamentList() {
+  // Only fetch once every 5 minutes to avoid excessive requests
+  if (millis() - _lastFilamentFetch < 300000 && _filamentList.size() > 0) {
+    return;
+  }
+
+  HTTPClient http;
+  String url = "http://" + _printerIP + "/rr_download?name=0:/sys/filamentList.json";
+  
+  http.setTimeout(2000);
+  http.setConnectTimeout(2000);
+  http.begin(url);
+  int httpCode = http.GET();
+
+  if (httpCode == 200) {
+    String payload = http.getString();
+    DynamicJsonDocument doc(4096);
+    DeserializationError error = deserializeJson(doc, payload);
+
+    if (!error && doc.containsKey("listValues")) {
+      _filamentList.clear();
+      JsonArray values = doc["listValues"].as<JsonArray>();
+      for (JsonVariant v : values) {
+        _filamentList.push_back(v.as<String>());
+      }
+      _lastFilamentFetch = millis();
+      log("Filament list fetched successfully");
+    } else {
+      log("Failed to parse filament list JSON");
+    }
+  } else {
+    log("Failed to fetch filament list");
+  }
+
+  http.end();
+}
+
+void NetworkManager::setLaneFilament(int unit, int lane, String filamentName) {
+  // Update AFC_lanes[unit][lane][4][0] via G-code
+  // Format: M7604 S<unit> P<lane> R<filament_name>
+  char buf[256];
+  snprintf(buf, sizeof(buf), "M7604 S%d P%d R\"%s\"", unit, lane, filamentName.c_str());
+  sendGCode(buf);
+  log(("Set filament for Unit " + String(unit) + " Lane " + String(lane) + ": " + filamentName).c_str());
+}
