@@ -465,7 +465,9 @@ void NetworkManager::beginWebServer() {
       [this]() {
         HTTPUpload &upload = _server.upload();
         if (upload.status == UPLOAD_FILE_START) {
-          _otaInProgress = true; // Pause background tasks during OTA
+          _otaInProgress = true; 
+          WiFi.setSleep(false); // Ensure maximum WiFi throughput during OTA
+
           log(("OTA Start: " + upload.filename).c_str());
           // Explicitly use U_FLASH and check begin()
           if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) {
@@ -480,6 +482,9 @@ void NetworkManager::beginWebServer() {
             log("Update Write Error");
             Update.printError(Serial);
           }
+          // CRITICAL: Feed the watchdog and service WiFi during heavy flash writes
+          yield();
+          delay(1); 
         } else if (upload.status == UPLOAD_FILE_END) {
           if (Update.end(true)) {
             log(("OTA Success: " + String(upload.totalSize) + " bytes")
@@ -488,9 +493,11 @@ void NetworkManager::beginWebServer() {
             log(("Update End Error: " + String(Update.errorString())).c_str());
             Update.printError(Serial);
           }
-          _otaInProgress = false; // Reset after upload completes
+          _otaInProgress = false; 
+          WiFi.setSleep(true); // Restore power saving
         } else if (upload.status == UPLOAD_FILE_ABORTED) {
-          _otaInProgress = false; // Reset on abort
+          _otaInProgress = false; 
+          WiFi.setSleep(true);
         }
       });
 
@@ -636,9 +643,10 @@ void NetworkManager::updatePrinterStatus() {
           JsonArray units = res.as<JsonArray>();
           for (int u = 0; u < units.size() && u < 8; u++) {
             JsonArray lanes = units[u].as<JsonArray>();
-            for (int l = 0; l < lanes.size() && l < 4; l++) {
-              int toolIdx = u * 4 + l;
-              if (toolIdx < 32) {
+            int actLanes = lanes.size();
+            for (int l = 0; l < actLanes; l++) {
+              int toolIdx = u * 16 + l; // Use fixed 16-lane offset for storage
+              if (toolIdx < 128) { // Up to 8 units * 16 lanes MAX
                 _laneLoaded[toolIdx] = lanes[l][0].as<bool>();
                 if (lanes[l].size() > 4 && lanes[l][4].is<JsonArray>()) {
                   JsonArray info = lanes[l][4].as<JsonArray>();
@@ -655,6 +663,9 @@ void NetworkManager::updatePrinterStatus() {
         if (subKey == "AFC_unit_total_lanes" && res.is<JsonArray>()) {
           JsonArray unitLanes = res.as<JsonArray>();
           _unitCount = unitLanes.size();
+          for(int i = 0; i < _unitCount && i < 8; i++) {
+            _lanesPerUnit[i] = unitLanes[i] | 4; // fallback to 4 if null
+          }
         }
 
         // Compact memory to prevent fragmentation

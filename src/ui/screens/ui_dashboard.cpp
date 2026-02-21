@@ -7,14 +7,15 @@ lv_obj_t *label_status;
 lv_obj_t *label_ip;
 lv_obj_t *label_unit;
 lv_obj_t *bar_progress;
-lv_obj_t *label_lane_tool[4];
-lv_obj_t *label_lane_status[4];
-lv_obj_t *btn_lane_load[4];
-lv_obj_t *btn_lane_unload[4];
-lv_obj_t *btn_lane_filament[4];
-lv_obj_t *label_lane_filament[4];
-lv_obj_t *btn_lane_more[4];
-lv_obj_t *led_indicator[4];
+#define MAX_LANES_PER_UNIT 16
+lv_obj_t *lane_wrappers[MAX_LANES_PER_UNIT] = {NULL};
+lv_obj_t *label_lane_tool[MAX_LANES_PER_UNIT] = {NULL};
+lv_obj_t *label_lane_status[MAX_LANES_PER_UNIT] = {NULL};
+lv_obj_t *btn_lane_unload[MAX_LANES_PER_UNIT] = {NULL};
+lv_obj_t *btn_lane_filament[MAX_LANES_PER_UNIT] = {NULL};
+lv_obj_t *label_lane_filament[MAX_LANES_PER_UNIT] = {NULL};
+lv_obj_t *btn_lane_more[MAX_LANES_PER_UNIT] = {NULL};
+lv_obj_t *led_indicator[MAX_LANES_PER_UNIT] = {NULL};
 
 // Footer labels
 lv_obj_t *label_wifi_name;
@@ -74,6 +75,7 @@ void ui_screen_dashboard_init() {
 
   lv_obj_t *lbl_set = lv_label_create(btn_settings);
   lv_label_set_text(lbl_set, LV_SYMBOL_SETTINGS);
+  lv_obj_add_style(lbl_set, &style_header, 0); // Inherit theme text color
   lv_obj_set_style_text_font(lbl_set, &lv_font_montserrat_20, 0);
   lv_obj_center(lbl_set);
 
@@ -85,26 +87,40 @@ void ui_screen_dashboard_init() {
   lv_obj_align(label_ip, LV_ALIGN_RIGHT_MID, -60, -10);
   lv_obj_align(label_clock, LV_ALIGN_RIGHT_MID, -60, 10);
 
-  /* Filament Lane Cards (4 lanes - One Row) */
-  for (int i = 0; i < 4; i++) {
-    int x = 5 + i * 120; // Tighter horizontal spacing
-    int y = 95;          // More space from header
+  /* Filament Lane Container (Flex) */
+  lv_obj_t *lane_container = lv_obj_create(ui_ScreenDashboard);
+  lv_obj_set_size(lane_container, 480, 235);
+  lv_obj_align(lane_container, LV_ALIGN_TOP_MID, 0, 50); // Below header
+  lv_obj_set_style_bg_opa(lane_container, 0, 0); // Transparent
+  lv_obj_set_style_border_width(lane_container, 0, 0);
+  lv_obj_set_style_pad_all(lane_container, 5, 0); 
+  lv_obj_set_style_pad_column(lane_container, 10, 0); // 3 gaps * 10 = 30px
+  lv_obj_set_flex_flow(lane_container, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(lane_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+  lv_obj_set_scrollbar_mode(lane_container, LV_SCROLLBAR_MODE_AUTO);
+  lv_obj_set_scroll_dir(lane_container, LV_DIR_HOR); // Horizontal only
 
-    lv_obj_t *card = lv_obj_create(ui_ScreenDashboard);
-    lv_obj_add_style(card, &style_card, 0);
-    lv_obj_set_size(card, 115, 145); // Compact cards for footer
-    lv_obj_set_pos(card, x, y);
-    lv_obj_clear_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+  /* Filament Lane Wrappers (Dynamic) */
+  for (int i = 0; i < MAX_LANES_PER_UNIT; i++) {
+    lane_wrappers[i] = lv_obj_create(lane_container);
+    lv_obj_set_size(lane_wrappers[i], 110, 215); // 4 * 110 = 440 + 30 + 10(pads) = 480
+    lv_obj_set_style_bg_opa(lane_wrappers[i], 0, 0); // Transparent wrapper
+    lv_obj_set_style_border_width(lane_wrappers[i], 0, 0);
+    lv_obj_set_style_pad_all(lane_wrappers[i], 0, 0);
+    lv_obj_clear_flag(lane_wrappers[i], LV_OBJ_FLAG_SCROLLABLE);
 
-    label_lane_tool[i] =
-        lv_label_create(ui_ScreenDashboard); // Parent to screen
-    lv_obj_set_width(label_lane_tool[i], 115);
+    label_lane_tool[i] = lv_label_create(lane_wrappers[i]);
+    lv_obj_set_width(label_lane_tool[i], 110);
     lv_obj_set_style_text_align(label_lane_tool[i], LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(label_lane_tool[i], LV_ALIGN_TOP_LEFT, x,
-                 68); // Centered between header and cards
+    lv_obj_align(label_lane_tool[i], LV_ALIGN_TOP_MID, 0, 5); // top of wrapper
     lv_label_set_text(label_lane_tool[i], "L?");
-    lv_obj_set_style_text_font(label_lane_tool[i], &lv_font_montserrat_20,
-                               0); // Larger font
+    lv_obj_set_style_text_font(label_lane_tool[i], &lv_font_montserrat_20, 0);
+
+    lv_obj_t *card = lv_obj_create(lane_wrappers[i]);
+    lv_obj_add_style(card, &style_card, 0);
+    lv_obj_set_size(card, 110, 145); 
+    lv_obj_align(card, LV_ALIGN_TOP_MID, 0, 30); // Below label
+    lv_obj_clear_flag(card, LV_OBJ_FLAG_SCROLLABLE);
 
     label_lane_status[i] = lv_label_create(card);
     lv_obj_align(label_lane_status[i], LV_ALIGN_TOP_MID, 0, 10);
@@ -124,7 +140,7 @@ void ui_screen_dashboard_init() {
         [](lv_event_t *e) {
           int idx = (int)(intptr_t)lv_event_get_user_data(e);
           int unit = DataManager.getActiveAFCUnit();
-          int toolIdxForLane = unit * 4 + idx;
+          int toolIdxForLane = unit * MAX_LANES_PER_UNIT + idx;
 
           // Only send unload command if lane is actually loaded
           if (!DataManager.isLaneLoaded(toolIdxForLane)) {
@@ -252,16 +268,10 @@ void ui_screen_dashboard_init() {
               LV_EVENT_CLICKED, NULL);
         },
         LV_EVENT_CLICKED, (void *)(intptr_t)i);
-  }
 
-  /* LED Indicators (below cards) */
-  for (int i = 0; i < 4; i++) {
-    int x = 5 + i * 120; // Match new card spacing
-    int y = 250;         // Below the cards (95 + 145 + 10)
-
-    led_indicator[i] = lv_obj_create(ui_ScreenDashboard);
+    led_indicator[i] = lv_obj_create(lane_wrappers[i]);
     lv_obj_set_size(led_indicator[i], 24, 24);   // Slightly larger
-    lv_obj_set_pos(led_indicator[i], x + 46, y); // Center under card
+    lv_obj_align(led_indicator[i], LV_ALIGN_BOTTOM_LEFT, 20, -5); // Bottom of wrapper
     lv_obj_set_style_radius(led_indicator[i], LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(led_indicator[i], lv_color_hex(0x888888),
                               0); // Default gray
@@ -275,9 +285,9 @@ void ui_screen_dashboard_init() {
     lv_obj_set_style_shadow_opa(led_indicator[i], 40, 0);
 
     // More button (next to LED)
-    btn_lane_more[i] = lv_btn_create(ui_ScreenDashboard);
+    btn_lane_more[i] = lv_btn_create(lane_wrappers[i]);
     lv_obj_set_size(btn_lane_more[i], 30, 20);
-    lv_obj_set_pos(btn_lane_more[i], x + 73, y); // Right of LED
+    lv_obj_align(btn_lane_more[i], LV_ALIGN_BOTTOM_RIGHT, -20, -7); // Next to LED
     lv_obj_set_style_bg_color(btn_lane_more[i], lv_color_hex(0x555555), 0);
     lv_obj_set_style_radius(btn_lane_more[i], 4, 0);
 
@@ -335,7 +345,7 @@ void ui_screen_dashboard_init() {
                 [](lv_event_t *e) {
                   int lane = selected_lane_for_options;
                   int unit = DataManager.getActiveAFCUnit();
-                  int toolIdxForLane = unit * 4 + lane;
+                  int toolIdxForLane = unit * MAX_LANES_PER_UNIT + lane;
 
                   // Only allow if lane is loaded
                   if (!DataManager.isLaneLoaded(toolIdxForLane)) {
@@ -374,7 +384,7 @@ void ui_screen_dashboard_init() {
                 [](lv_event_t *e) {
                   int lane = selected_lane_for_options;
                   int unit = DataManager.getActiveAFCUnit();
-                  int toolIdxForLane = unit * 4 + lane;
+                  int toolIdxForLane = unit * MAX_LANES_PER_UNIT + lane;
 
                   // Only allow if lane is loaded
                   if (!DataManager.isLaneLoaded(toolIdxForLane)) {
@@ -468,6 +478,7 @@ void ui_dashboard_update(const char *status, float progress, const char *name,
 
   // Update Lane Cards
   int activeUnit = DataManager.getActiveAFCUnit();
+  int actLanes = DataManager.getLanesForUnit(activeUnit);
 
   // Update unit label
   if (label_unit) {
@@ -476,8 +487,17 @@ void ui_dashboard_update(const char *status, float progress, const char *name,
     lv_label_set_text(label_unit, unitBuf);
   }
 
-  for (int i = 0; i < 4; i++) {
-    int toolIdxForLane = activeUnit * 4 + i;
+  for (int i = 0; i < MAX_LANES_PER_UNIT; i++) {
+    if (lane_wrappers[i]) {
+      if (i < actLanes) {
+        lv_obj_clear_flag(lane_wrappers[i], LV_OBJ_FLAG_HIDDEN);
+      } else {
+        lv_obj_add_flag(lane_wrappers[i], LV_OBJ_FLAG_HIDDEN);
+        continue;
+      }
+    }
+
+    int toolIdxForLane = activeUnit * MAX_LANES_PER_UNIT + i;
 
     // Update lane label (above card) - just "Lane X"
     if (label_lane_tool[i]) {

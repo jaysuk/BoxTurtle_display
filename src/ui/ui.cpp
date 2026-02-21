@@ -26,7 +26,7 @@ void ui_theme_apply(int theme_idx) {
   lv_style_set_bg_opa(&style_card, LV_OPA_COVER);
   lv_style_set_radius(&style_card, 14);
   lv_style_set_border_width(&style_card, 1);
-  lv_style_set_pad_all(&style_card, 12);
+  lv_style_set_pad_all(&style_card, 10);
   lv_style_set_shadow_width(&style_card, 25);
   lv_style_set_shadow_opa(&style_card, 60);
 

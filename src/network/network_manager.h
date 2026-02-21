@@ -6,7 +6,7 @@
 #include <WebServer.h>
 #include <WiFi.h>
 #include <deque>
-#define FIRMWARE_VERSION "1.1.0"
+#define FIRMWARE_VERSION "1.2.0"
 
 class NetworkManager {
 public:
@@ -66,15 +66,19 @@ public:
     saveSettings();
   }
   int getUnitCount() { return _unitCount; }
+  int getLanesForUnit(int unit) {
+    if (unit >= 0 && unit < _unitCount && unit < 8) return _lanesPerUnit[unit];
+    return 4; // default
+  }
 
   bool isLaneLoaded(int idx) {
-    if (idx >= 0 && idx < 32)
+    if (idx >= 0 && idx < 128)
       return _laneLoaded[idx];
     return false;
   }
 
   String getLaneName(int idx) {
-    if (idx >= 0 && idx < 32)
+    if (idx >= 0 && idx < 128)
       return _laneNames[idx];
     return "";
   }
@@ -151,8 +155,9 @@ private:
 
   int _activeAFCUnit = 0;
   int _unitCount = 1;
-  bool _laneLoaded[32] = {false};
-  String _laneNames[32];
+  int _lanesPerUnit[8] = {4, 4, 4, 4, 4, 4, 4, 4};
+  bool _laneLoaded[128] = {false};
+  String _laneNames[128];
 
   uint32_t _lastCommandTime = 0;
   uint32_t _commandLockout = 3000; // 3 seconds lockout on UI updates
