@@ -83,8 +83,8 @@ void setup() {
   indev_drv.read_cb = my_touchpad_read;
   lv_indev_drv_register(&indev_drv);
 
-  ui_init();
   DataManager.init();
+  ui_init();
   Serial.println("System Ready - Polling I2C...");
 }
 

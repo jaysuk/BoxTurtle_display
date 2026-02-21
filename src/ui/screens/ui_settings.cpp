@@ -68,6 +68,13 @@ static void btn_unit_event_cb(lv_event_t *e) {
   ui_settings_refresh(); // Refresh to update button states
 }
 
+static void dd_theme_event_cb(lv_event_t *e) {
+  lv_obj_t *dd = lv_event_get_target(e);
+  int idx = lv_dropdown_get_selected(dd);
+  DataManager.setTheme(idx);
+  ui_theme_apply(idx);
+}
+
 static void kb_event_cb(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
@@ -280,6 +287,24 @@ void ui_screen_settings_init() {
   lv_obj_align(lbl_afc, LV_ALIGN_TOP_LEFT, 0, 0);
 
   // Buttons will be created dynamically in ui_settings_refresh()
+
+  /* Theme Selection */
+  lv_obj_t *cont_theme = lv_obj_create(cont_main);
+  lv_obj_set_size(cont_theme, 440, 100);
+  lv_obj_set_pos(cont_theme, 20, 670); // Below AFC unit area
+  lv_obj_add_style(cont_theme, &style_card, 0);
+
+  lv_obj_t *lbl_theme = lv_label_create(cont_theme);
+  lv_label_set_text(lbl_theme, "UI Theme");
+  lv_obj_add_style(lbl_theme, &style_text_title, 0);
+  lv_obj_align(lbl_theme, LV_ALIGN_TOP_LEFT, 0, 0);
+
+  lv_obj_t *dd_theme = lv_dropdown_create(cont_theme);
+  lv_dropdown_set_options(dd_theme, "Dark Purple\nLight\nDark Green\nCyberpunk");
+  lv_obj_set_size(dd_theme, 400, 40);
+  lv_obj_align(dd_theme, LV_ALIGN_TOP_LEFT, 0, 30);
+  lv_dropdown_set_selected(dd_theme, DataManager.getTheme());
+  lv_obj_add_event_cb(dd_theme, dd_theme_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
   /* Keyboard - Stays on root screen to remain on top */
   kb = lv_keyboard_create(ui_ScreenSettings);

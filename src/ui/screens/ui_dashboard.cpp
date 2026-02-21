@@ -37,11 +37,7 @@ void ui_screen_dashboard_init() {
   /* Top Header */
   lv_obj_t *header = lv_obj_create(ui_ScreenDashboard);
   lv_obj_set_size(header, 480, 50);
-  lv_obj_set_style_bg_color(header, lv_color_hex(0x1a1a2e), 0); // Richer header
-  lv_obj_set_style_border_side(header, LV_BORDER_SIDE_BOTTOM, 0);
-  lv_obj_set_style_border_width(header, 2, 0); // Thicker border
-  lv_obj_set_style_border_color(header, lv_color_hex(0x3a3a4a),
-                                0); // Lighter border
+  lv_obj_add_style(header, &style_header, 0);
   lv_obj_align(header, LV_ALIGN_TOP_MID, 0, 0);
   lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);        // Disable scrolling
   lv_obj_set_scrollbar_mode(header, LV_SCROLLBAR_MODE_OFF); // Hide scrollbar
@@ -50,26 +46,22 @@ void ui_screen_dashboard_init() {
   label_printer_name = lv_label_create(header);
   lv_label_set_text(label_printer_name, "PanelDue SC01+");
   lv_obj_set_style_text_font(label_printer_name, &lv_font_montserrat_20, 0);
-  lv_obj_set_style_text_color(label_printer_name, lv_color_hex(0xFFFFFF), 0);
   lv_obj_align(label_printer_name, LV_ALIGN_LEFT_MID, 10, 0);
 
   /* Unit Label (Center of Header) */
   label_unit = lv_label_create(header);
   lv_label_set_text(label_unit, "Unit 0");
   lv_obj_set_style_text_font(label_unit, &lv_font_montserrat_16, 0);
-  lv_obj_set_style_text_color(label_unit, lv_color_hex(0xFFFFFF), 0);
   lv_obj_align(label_unit, LV_ALIGN_CENTER, 0, 0);
 
   label_ip = lv_label_create(header);
   lv_label_set_text(label_ip, "Disconnected");
   lv_obj_set_style_text_font(label_ip, &lv_font_montserrat_14, 0);
-  lv_obj_set_style_text_color(label_ip, lv_color_hex(0xAAAAAA), 0);
   lv_obj_align(label_ip, LV_ALIGN_RIGHT_MID, -10, -10);
 
   label_clock = lv_label_create(header);
   lv_label_set_text(label_clock, "00:00:00");
   lv_obj_set_style_text_font(label_clock, &lv_font_montserrat_14, 0);
-  lv_obj_set_style_text_color(label_clock, lv_color_hex(0xFFFFFF), 0);
   lv_obj_align(label_clock, LV_ALIGN_RIGHT_MID, -10, 10);
 
   /* Navigation (Gear Icon in Header) */
@@ -108,8 +100,6 @@ void ui_screen_dashboard_init() {
         lv_label_create(ui_ScreenDashboard); // Parent to screen
     lv_obj_set_width(label_lane_tool[i], 115);
     lv_obj_set_style_text_align(label_lane_tool[i], LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_color(label_lane_tool[i], lv_color_hex(0xFFFFFF),
-                                0); // Explicit White
     lv_obj_align(label_lane_tool[i], LV_ALIGN_TOP_LEFT, x,
                  68); // Centered between header and cards
     lv_label_set_text(label_lane_tool[i], "L?");
@@ -120,8 +110,6 @@ void ui_screen_dashboard_init() {
     lv_obj_align(label_lane_status[i], LV_ALIGN_TOP_MID, 0, 10);
     lv_label_set_text(label_lane_status[i], "Unloaded");
     lv_obj_set_style_text_font(label_lane_status[i], &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(label_lane_status[i], lv_color_hex(0xFFFFFF),
-                                0);
 
     btn_lane_unload[i] = lv_btn_create(card);
     lv_obj_set_size(btn_lane_unload[i], 90, 35);
@@ -441,7 +429,8 @@ void ui_screen_dashboard_init() {
   /* Footer Bar */
   lv_obj_t *footer = lv_obj_create(ui_ScreenDashboard);
   lv_obj_set_size(footer, 480, 35);
-  lv_obj_set_style_bg_color(footer, lv_color_hex(0x1a1a2e), 0);
+  lv_obj_add_style(footer, &style_header, 0);
+  lv_obj_set_style_border_width(footer, 0, 0);
   lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, 0);
   lv_obj_clear_flag(footer, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_set_scrollbar_mode(footer, LV_SCROLLBAR_MODE_OFF);
@@ -452,7 +441,6 @@ void ui_screen_dashboard_init() {
   label_wifi_name = lv_label_create(footer);
   lv_label_set_text(label_wifi_name, "WiFi: --");
   lv_obj_set_style_text_font(label_wifi_name, &lv_font_montserrat_14, 0);
-  lv_obj_set_style_text_color(label_wifi_name, lv_color_hex(0xAAAAAA), 0);
   lv_obj_align(label_wifi_name, LV_ALIGN_LEFT_MID, 10, 0);
 
   // Printer Connection Status (right)

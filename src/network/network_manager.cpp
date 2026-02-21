@@ -71,6 +71,7 @@ void NetworkManager::loadSettings() {
   _gmtOffset = _prefs.getLong("gmto", 0);
   _selectedTool = _prefs.getInt("tlidx", 0);
   _activeAFCUnit = _prefs.getInt("afcunit", 0);
+  _theme = _prefs.getInt("theme", 0);
   Serial.println("Settings Loaded.");
 }
 
@@ -84,6 +85,7 @@ void NetworkManager::saveSettings() {
   _prefs.putLong("gmto", _gmtOffset);
   _prefs.putInt("tlidx", _selectedTool);
   _prefs.putInt("afcunit", _activeAFCUnit);
+  _prefs.putInt("theme", _theme);
   Serial.println("Settings Saved.");
 }
 
@@ -135,93 +137,51 @@ void NetworkManager::beginWebServer() {
     // Modern CSS with glassmorphism and card-based layout
     html += "<style>";
     html += "*{margin:0;padding:0;box-sizing:border-box;}";
-    html += "body{font-family:'Segoe "
-            "UI',Tahoma,sans-serif;background:linear-gradient(135deg,#0f0f1e "
-            "0%,#1a1a2e 100%);color:#fff;padding:20px;min-height:100vh;}";
+    
+    // Theme colors
+    if (_theme == 1) { // Light
+      html += ":root { --bg1: #f3f4f6; --bg2: #e5e7eb; --text: #1f2937; --text-muted: #4b5563; --card-bg: rgba(255,255,255,0.7); --card-border: rgba(0,0,0,0.1); --primary1: #3b82f6; --primary2: #2563eb; --accent: #10b981; --input-bg: rgba(0,0,0,0.05); }";
+    } else if (_theme == 2) { // Dark Green
+      html += ":root { --bg1: #064e3b; --bg2: #022c22; --text: #d1fae5; --text-muted: #a7f3d0; --card-bg: rgba(6,78,59,0.5); --card-border: rgba(52,211,153,0.2); --primary1: #10b981; --primary2: #059669; --accent: #34d399; --input-bg: rgba(0,0,0,0.2); }";
+    } else if (_theme == 3) { // Cyberpunk
+      html += ":root { --bg1: #2a0a2a; --bg2: #000022; --text: #00ffcc; --text-muted: #ff00ff; --card-bg: rgba(20,0,30,0.8); --card-border: rgba(255,0,255,0.4); --primary1: #ff00ff; --primary2: #cc00cc; --accent: #00ffcc; --input-bg: rgba(0,255,204,0.1); }";
+    } else { // Dark Purple / Default
+      html += ":root { --bg1: #0f0f1e; --bg2: #1a1a2e; --text: #fff; --text-muted: #a0aec0; --card-bg: rgba(255,255,255,0.05); --card-border: rgba(255,255,255,0.1); --primary1: #667eea; --primary2: #764ba2; --accent: #4ade80; --input-bg: rgba(255,255,255,0.08); }";
+    }
+
+    html += "body{font-family:'Segoe UI',Tahoma,sans-serif;background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);color:var(--text);padding:20px;min-height:100vh;}";
     html += ".container{max-width:1200px;margin:0 auto;}";
-
-    // Header
     html += ".header{text-align:center;margin-bottom:40px;}";
-    html += ".header "
-            "h1{font-size:2.5em;margin-bottom:10px;background:linear-gradient("
-            "135deg,#667eea 0%,#764ba2 "
-            "100%);-webkit-background-clip:text;-webkit-text-fill-color:"
-            "transparent;background-clip:text;}";
-    html += ".badge{display:inline-block;background:rgba(102,126,234,0.2);"
-            "border:1px solid rgba(102,126,234,0.4);padding:5px "
-            "15px;border-radius:20px;font-size:0.9em;margin-top:10px;}";
+    html += ".header h1{font-size:2.5em;margin-bottom:10px;background:linear-gradient(135deg,var(--primary1) 0%,var(--primary2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}";
+    html += ".badge{display:inline-block;background:var(--input-bg);border:1px solid var(--card-border);padding:5px 15px;border-radius:20px;font-size:0.9em;margin-top:10px;}";
     html += ".status{display:inline-block;margin-left:10px;}";
-    html += ".status-dot{display:inline-block;width:8px;height:8px;background:#"
-            "4ade80;border-radius:50%;margin-right:5px;animation:pulse 2s "
-            "infinite;}";
+    html += ".status-dot{display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:50%;margin-right:5px;animation:pulse 2s infinite;}";
     html += "@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}";
-
-    // Card grid
-    html += ".grid{display:grid;grid-template-columns:repeat(auto-fit,minmax("
-            "500px,1fr));gap:25px;margin-bottom:25px;}";
+    html += ".grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:25px;margin-bottom:25px;}";
     html += "@media(max-width:768px){.grid{grid-template-columns:1fr;}}";
-
-    // Card styling with glassmorphism
-    html +=
-        ".card{background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);"
-        "border:1px solid "
-        "rgba(255,255,255,0.1);border-radius:16px;padding:25px;box-shadow:0 "
-        "8px 32px rgba(0,0,0,0.3);transition:transform 0.3s,box-shadow 0.3s;}";
-    html += ".card:hover{transform:translateY(-5px);box-shadow:0 12px 40px "
-            "rgba(102,126,234,0.3);}";
-    html += ".card-title{font-size:1.3em;margin-bottom:25px;display:flex;align-"
-            "items:center;gap:10px;color:#667eea;}";
+    html += ".card{background:var(--card-bg);backdrop-filter:blur(10px);border:1px solid var(--card-border);border-radius:16px;padding:25px;box-shadow:0 8px 32px rgba(0,0,0,0.3);transition:transform 0.3s,box-shadow 0.3s;}";
+    html += ".card:hover{transform:translateY(-5px);box-shadow:0 12px 40px var(--card-border);}";
+    html += ".card-title{font-size:1.3em;margin-bottom:25px;display:flex;align-items:center;gap:10px;color:var(--primary1);}";
     html += ".card-icon{font-size:1.5em;}";
-
-    // Form inputs
-    html +=
-        "label{display:block;margin-bottom:8px;font-size:0.9em;color:#a0aec0;}";
-    html += "input,select{width:100%;padding:12px;margin-bottom:15px;"
-            "background:rgba(255,255,255,0.08);border:1px solid "
-            "rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:1em;"
-            "transition:all 0.3s;}";
-    html +=
-        "input:focus,select:focus{outline:none;border-color:#667eea;background:"
-        "rgba(255,255,255,0.12);box-shadow:0 0 0 3px rgba(102,126,234,0.2);}";
+    html += "label{display:block;margin-bottom:8px;font-size:0.9em;color:var(--text-muted);}";
+    html += "input,select{width:100%;padding:12px;margin-bottom:15px;background:var(--input-bg);border:1px solid var(--card-border);border-radius:8px;color:var(--text);font-size:1em;transition:all 0.3s;}";
+    html += "input:focus,select:focus{outline:none;border-color:var(--primary1);background:var(--card-bg);box-shadow:0 0 0 3px var(--card-border);}";
     html += "input[type='file']{padding:10px;cursor:pointer;}";
-    html += "option{background:#1a1a2e;color:#fff;}";
-
-    // Buttons
-    html += "button{padding:12px "
-            "24px;background:linear-gradient(135deg,#667eea 0%,#764ba2 "
-            "100%);color:#fff;border:none;border-radius:8px;cursor:pointer;"
-            "font-size:1em;font-weight:600;transition:all 0.3s;box-shadow:0 "
-            "4px 15px rgba(102,126,234,0.4);}";
-    html += "button:hover{transform:translateY(-2px);box-shadow:0 6px 20px "
-            "rgba(102,126,234,0.6);}";
+    html += "option{background:var(--bg2);color:var(--text);}";
+    html += "button{padding:12px 24px;background:linear-gradient(135deg,var(--primary1) 0%,var(--primary2) 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1em;font-weight:600;transition:all 0.3s;box-shadow:0 4px 15px rgba(0,0,0,0.2);}";
+    html += "button:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3);}";
     html += "button:active{transform:translateY(0);}";
-    html += ".btn-secondary{background:rgba(255,255,255,0.1);box-shadow:none;}";
-    html += ".btn-secondary:hover{background:rgba(255,255,255,0.15);}";
+    html += ".btn-secondary{background:var(--input-bg);box-shadow:none;}";
+    html += ".btn-secondary:hover{background:var(--card-border);}";
     html += ".btn-small{padding:6px 12px;font-size:0.85em;}";
-
-    // Console
-    html += "#console{background:rgba(0,0,0,0.5);color:#4ade80;padding:15px;"
-            "height:250px;overflow-y:auto;font-family:'Courier "
-            "New',monospace;font-size:0.9em;border-radius:8px;border:1px solid "
-            "rgba(255,255,255,0.1);line-height:1.6;}";
+    html += "#console{background:rgba(0,0,0,0.5);color:var(--accent);padding:15px;height:250px;overflow-y:auto;font-family:'Courier New',monospace;font-size:0.9em;border-radius:8px;border:1px solid var(--card-border);line-height:1.6;}";
     html += "#console::-webkit-scrollbar{width:8px;}";
-    html +=
-        "#console::-webkit-scrollbar-track{background:rgba(255,255,255,0.05);}";
-    html += "#console::-webkit-scrollbar-thumb{background:rgba(102,126,234,0.5)"
-            ";border-radius:4px;}";
-
-    // Progress bar
-    html += ".progress-container{width:100%;background:rgba(255,255,255,0.1);"
-            "border-radius:8px;margin-top:15px;display:none;overflow:hidden;}";
-    html += ".progress-bar{height:24px;background:linear-gradient(90deg,#"
-            "667eea 0%,#764ba2 "
-            "100%);border-radius:8px;text-align:center;line-height:24px;color:#"
-            "fff;font-weight:600;transition:width 0.3s;box-shadow:0 0 10px "
-            "rgba(102,126,234,0.5);}";
-
-    // Link styling
-    html += "a{color:#667eea;text-decoration:none;transition:color 0.3s;}";
-    html += "a:hover{color:#764ba2;}";
+    html += "#console::-webkit-scrollbar-track{background:var(--input-bg);}";
+    html += "#console::-webkit-scrollbar-thumb{background:var(--primary1);border-radius:4px;}";
+    html += ".progress-container{width:100%;background:var(--input-bg);border-radius:8px;margin-top:15px;display:none;overflow:hidden;}";
+    html += ".progress-bar{height:24px;background:linear-gradient(90deg,var(--primary1) 0%,var(--primary2) 100%);border-radius:8px;text-align:center;line-height:24px;color:#fff;font-weight:600;transition:width 0.3s;box-shadow:0 0 10px rgba(0,0,0,0.5);}";
+    html += "a{color:var(--primary1);text-decoration:none;transition:color 0.3s;}";
+    html += "a:hover{color:var(--primary2);}";
 
     html += "</style>";
 
@@ -416,6 +376,17 @@ void NetworkManager::beginWebServer() {
       html += ">Unit " + String(i) + "</option>";
     }
     html += "</select>";
+    
+    html += "<label>Web UI & Display Theme</label>";
+    html += "<select name='theme'>";
+    const char* themes[] = {"Dark Purple (Default)", "Light", "Dark Green", "Cyberpunk"};
+    for (int i = 0; i < 4; i++) {
+      html += "<option value='" + String(i) + "'";
+      if (i == _theme) html += " selected";
+      html += ">" + String(themes[i]) + "</option>";
+    }
+    html += "</select>";
+    
     html += "<button type='submit' style='width:100%;margin-top:10px;'>💾 Save "
             "& Reconnect</button>";
     html += "</form>";
@@ -472,6 +443,8 @@ void NetworkManager::beginWebServer() {
       _gmtOffset = _server.arg("timezone").toInt();
     if (_server.hasArg("afcunit"))
       setActiveAFCUnit(_server.arg("afcunit").toInt());
+    if (_server.hasArg("theme"))
+      setTheme(_server.arg("theme").toInt());
 
     saveSettings();
     log("Settings saved via Web UI. Reconnecting...");

@@ -6,8 +6,7 @@
 #include <WebServer.h>
 #include <WiFi.h>
 #include <deque>
-
-#define FIRMWARE_VERSION "1.0.0"
+#define FIRMWARE_VERSION "1.1.0"
 
 class NetworkManager {
 public:
@@ -52,6 +51,12 @@ public:
   uint32_t getPollInterval() { return _pollInterval; }
   void setPollInterval(uint32_t ms) {
     _pollInterval = ms;
+    saveSettings();
+  }
+
+  int getTheme() { return _theme; }
+  void setTheme(int theme) {
+    _theme = theme;
     saveSettings();
   }
 
@@ -142,6 +147,7 @@ private:
   uint32_t _pollInterval = 1500;
   uint32_t _lastUpdate = 0;
   uint8_t _queryIndex = 0;
+  int _theme = 0;
 
   int _activeAFCUnit = 0;
   int _unitCount = 1;
