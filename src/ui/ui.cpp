@@ -4,6 +4,7 @@
 // External bypass flag from main.cpp
 extern bool g_bypass_calibration;
 #include "screens/ui_calibration.h"
+#include "screens/ui_lane_info.h"
 
 /* Global Styles */
 lv_style_t style_base_screen;
@@ -16,6 +17,7 @@ lv_style_t style_header;
 /* Objects */
 lv_obj_t *ui_ScreenDashboard;
 lv_obj_t *ui_ScreenSettings;
+lv_obj_t *ui_ScreenLaneInfo;
 lv_obj_t *label_printer_name = NULL;
 lv_obj_t *label_clock = NULL;
 
@@ -144,6 +146,7 @@ void ui_init() {
   ui_screen_dashboard_init();
   ui_screen_settings_init();
   ui_calibration_screen_init();
+  ui_screen_lane_info_init();
 
   /* Load dashboard screen with calibration */
   g_bypass_calibration = false;
@@ -202,5 +205,10 @@ void ui_update_status() {
   if (lv_scr_act() == ui_ScreenSettings) {
     extern void ui_settings_refresh();
     ui_settings_refresh();
+  }
+
+  // Update lane info screen if visible
+  if (lv_scr_act() == ui_ScreenLaneInfo) {
+    ui_lane_info_update();
   }
 }

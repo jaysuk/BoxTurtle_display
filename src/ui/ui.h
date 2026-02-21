@@ -19,11 +19,14 @@ extern lv_style_t style_header;
 extern lv_obj_t *ui_ScreenDashboard;
 extern lv_obj_t *ui_ScreenSettings;
 extern lv_obj_t *ui_ScreenCalibration;
+extern lv_obj_t *ui_ScreenLaneInfo;
 
 void ui_screen_dashboard_init();
 void ui_dashboard_update(const char *status, float progress, const char *name,
                          const char *time, int toolIdx);
 void ui_screen_settings_init();
+void ui_screen_lane_info_init();
+void ui_lane_info_update();
 
 /* Navigation */
 void ui_nav_create(lv_obj_t *parent);

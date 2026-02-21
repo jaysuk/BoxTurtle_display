@@ -67,10 +67,9 @@ void ui_screen_dashboard_init() {
 
   /* Navigation (Gear Icon in Header) */
   lv_obj_t *btn_settings = lv_btn_create(header);
-  lv_obj_set_size(btn_settings, 60, 50);
+  lv_obj_set_size(btn_settings, 50, 50);
   lv_obj_align(btn_settings, LV_ALIGN_RIGHT_MID, -5, 0);
-  lv_obj_set_style_bg_opa(btn_settings, 0,
-                          0); // Transparent background for icon feel
+  lv_obj_set_style_bg_opa(btn_settings, 0, 0);
   lv_obj_set_style_shadow_width(btn_settings, 0, 0);
 
   lv_obj_t *lbl_set = lv_label_create(btn_settings);
@@ -83,9 +82,26 @@ void ui_screen_dashboard_init() {
       btn_settings, [](lv_event_t *e) { lv_scr_load(ui_ScreenSettings); },
       LV_EVENT_CLICKED, NULL);
 
-  /* Adjust header labels to not overlap with gear icon */
-  lv_obj_align(label_ip, LV_ALIGN_RIGHT_MID, -60, -10);
-  lv_obj_align(label_clock, LV_ALIGN_RIGHT_MID, -60, 10);
+  /* Navigation (Chart/Measure Icon → Lane Info Screen) */
+  lv_obj_t *btn_lanes = lv_btn_create(header);
+  lv_obj_set_size(btn_lanes, 50, 50);
+  lv_obj_align(btn_lanes, LV_ALIGN_RIGHT_MID, -55, 0);
+  lv_obj_set_style_bg_opa(btn_lanes, 0, 0);
+  lv_obj_set_style_shadow_width(btn_lanes, 0, 0);
+
+  lv_obj_t *lbl_lanes = lv_label_create(btn_lanes);
+  lv_label_set_text(lbl_lanes, LV_SYMBOL_LIST);
+  lv_obj_add_style(lbl_lanes, &style_header, 0);
+  lv_obj_set_style_text_font(lbl_lanes, &lv_font_montserrat_20, 0);
+  lv_obj_center(lbl_lanes);
+
+  lv_obj_add_event_cb(
+      btn_lanes, [](lv_event_t *e) { lv_scr_load(ui_ScreenLaneInfo); },
+      LV_EVENT_CLICKED, NULL);
+
+  /* Adjust header labels to not overlap with both icon buttons */
+  lv_obj_align(label_ip, LV_ALIGN_RIGHT_MID, -110, -10);
+  lv_obj_align(label_clock, LV_ALIGN_RIGHT_MID, -110, 10);
 
   /* Filament Lane Container (Flex) */
   lv_obj_t *lane_container = lv_obj_create(ui_ScreenDashboard);

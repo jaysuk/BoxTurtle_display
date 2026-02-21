@@ -6,7 +6,7 @@
 #include <WebServer.h>
 #include <WiFi.h>
 #include <deque>
-#define FIRMWARE_VERSION "1.2.0"
+#define FIRMWARE_VERSION "1.3.0"
 
 class NetworkManager {
 public:
@@ -96,6 +96,24 @@ public:
     // Fallback to calculated tool index if data not available
     return unit * 4 + lane;
   }
+
+  // Returns AFC_lanes[unit][lane][idx] as a float (idx=1: first len, idx=2: full len)
+  float getLaneLength(int unit, int lane, int idx) {
+    if (_modelGlobal.containsKey("AFC_lanes")) {
+      JsonArray units = _modelGlobal["AFC_lanes"].as<JsonArray>();
+      if (unit >= 0 && unit < (int)units.size()) {
+        JsonArray lanes = units[unit].as<JsonArray>();
+        if (lane >= 0 && lane < (int)lanes.size()) {
+          JsonArray laneData = lanes[lane].as<JsonArray>();
+          if (idx >= 0 && idx < (int)laneData.size()) {
+            return laneData[idx].as<float>();
+          }
+        }
+      }
+    }
+    return -1.0f; // unavailable
+  }
+
 
   int getLEDColor(int unit, int lane) {
     // Access AFC_LED_array[unit][lane] from the global model
