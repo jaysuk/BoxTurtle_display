@@ -33,6 +33,13 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area,
   lv_disp_flush_ready(disp);
 }
 
+// Screensaver state
+static bool g_ss_dimmed = false;
+static uint32_t g_last_touch_ms = 0;
+static uint32_t g_ss_wake_ms = 0;    // Time of last screensaver wake
+static const uint32_t SS_WAKE_LOCKOUT_MS = 1000; // Block LVGL touches for 1s after wake
+static const uint8_t SS_FULL_BRIGHTNESS = 255;
+
 // Global touch state
 static bool g_touched = false;
 static int32_t g_last_x = 0;
@@ -157,16 +164,42 @@ void loop() {
       }
 
       g_touched = true;
+      // Screensaver: wake on touch — start 1s lockout, absorb this touch
+      if (g_ss_dimmed) {
+        g_ss_dimmed = false;
+        g_ss_wake_ms = millis();
+        tft.setBrightness(SS_FULL_BRIGHTNESS);
+        g_touched = false;
+        g_last_touch_ms = millis();
+        goto skip_lvgl;
+      }
+      // Still within post-wake lockout window — suppress touch to LVGL
+      if ((millis() - g_ss_wake_ms) < SS_WAKE_LOCKOUT_MS) {
+        g_touched = false;
+        goto skip_lvgl;
+      }
+      g_last_touch_ms = millis();
     } else {
       g_touched = false;
+    }
+  }
+
+  // Screensaver timeout check
+  {
+    int ssTout = DataManager.getSSTimeout();
+    if (ssTout > 0 && !g_ss_dimmed &&
+        (millis() - g_last_touch_ms) > (uint32_t)ssTout * 1000UL) {
+      g_ss_dimmed = true;
+      tft.setBrightness((uint8_t)DataManager.getSSDimLevel());
     }
   }
 
   // 2. LVGL HANDLER
   DataManager.loop();
   ui_update_status();
-  lv_tick_inc(5); // Add 5ms as we have a 5ms delay
+  lv_tick_inc(5);
   lv_timer_handler();
 
+  skip_lvgl:
   delay(5);
 }

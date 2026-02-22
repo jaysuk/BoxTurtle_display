@@ -306,6 +306,75 @@ void ui_screen_settings_init() {
   lv_dropdown_set_selected(dd_theme, DataManager.getTheme());
   lv_obj_add_event_cb(dd_theme, dd_theme_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
+  /* Screensaver Timeout */
+  lv_obj_t *cont_ss = lv_obj_create(cont_main);
+  lv_obj_set_size(cont_ss, 440, 260); // Taller to fit two fields
+  lv_obj_set_pos(cont_ss, 20, 790); // Below theme card
+  lv_obj_add_style(cont_ss, &style_card, 0);
+
+  lv_obj_t *lbl_ss = lv_label_create(cont_ss);
+  lv_label_set_text(lbl_ss, "Screensaver");
+  lv_obj_add_style(lbl_ss, &style_text_title, 0);
+  lv_obj_align(lbl_ss, LV_ALIGN_TOP_LEFT, 0, 0);
+
+  // Timeout field
+  lv_obj_t *lbl_ss_tout = lv_label_create(cont_ss);
+  lv_label_set_text(lbl_ss_tout, "Timeout (seconds, 0 = off)");
+  lv_obj_add_style(lbl_ss_tout, &style_text_title, 0);
+  lv_obj_align(lbl_ss_tout, LV_ALIGN_TOP_LEFT, 0, 25);
+
+  static lv_obj_t *ta_ss;
+  ta_ss = lv_textarea_create(cont_ss);
+  lv_textarea_set_accepted_chars(ta_ss, "0123456789");
+  lv_obj_set_size(ta_ss, 200, 38);
+  lv_obj_align(ta_ss, LV_ALIGN_TOP_LEFT, 0, 48);
+  lv_obj_add_event_cb(ta_ss, ta_event_cb, LV_EVENT_ALL, NULL);
+  {
+    char ssBuf[8];
+    snprintf(ssBuf, sizeof(ssBuf), "%d", DataManager.getSSTimeout());
+    lv_textarea_set_text(ta_ss, ssBuf);
+  }
+
+  // Dim level field
+  lv_obj_t *lbl_ss_dim = lv_label_create(cont_ss);
+  lv_label_set_text(lbl_ss_dim, "Dim Level (0-255)");
+  lv_obj_add_style(lbl_ss_dim, &style_text_title, 0);
+  lv_obj_align(lbl_ss_dim, LV_ALIGN_TOP_LEFT, 0, 100);
+
+  static lv_obj_t *ta_ss_dim;
+  ta_ss_dim = lv_textarea_create(cont_ss);
+  lv_textarea_set_accepted_chars(ta_ss_dim, "0123456789");
+  lv_obj_set_size(ta_ss_dim, 200, 38);
+  lv_obj_align(ta_ss_dim, LV_ALIGN_TOP_LEFT, 0, 123);
+  lv_obj_add_event_cb(ta_ss_dim, ta_event_cb, LV_EVENT_ALL, NULL);
+  {
+    char dimBuf[8];
+    snprintf(dimBuf, sizeof(dimBuf), "%d", DataManager.getSSDimLevel());
+    lv_textarea_set_text(ta_ss_dim, dimBuf);
+  }
+
+  // Save button (saves both fields)
+  struct SSFields { lv_obj_t *tout; lv_obj_t *dim; };
+  static SSFields ss_fields;
+  ss_fields.tout = ta_ss;
+  ss_fields.dim  = ta_ss_dim;
+
+  lv_obj_t *btn_save_ss = lv_btn_create(cont_ss);
+  lv_obj_add_style(btn_save_ss, &style_btn_primary, 0);
+  lv_obj_set_size(btn_save_ss, 120, 40);
+  lv_obj_align(btn_save_ss, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+  lv_obj_add_event_cb(btn_save_ss, [](lv_event_t *e) {
+    SSFields *f = (SSFields *)lv_event_get_user_data(e);
+    int tout = atoi(lv_textarea_get_text(f->tout));
+    int dim  = atoi(lv_textarea_get_text(f->dim));
+    DataManager.setSSTimeout(tout < 0 ? 0 : tout);
+    DataManager.setSSDimLevel(dim);
+    if (kb) lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+  }, LV_EVENT_CLICKED, &ss_fields);
+  lv_obj_t *lbl_save_ss = lv_label_create(btn_save_ss);
+  lv_label_set_text(lbl_save_ss, "Save");
+  lv_obj_center(lbl_save_ss);
+
   /* Keyboard - Stays on root screen to remain on top */
   kb = lv_keyboard_create(ui_ScreenSettings);
   lv_obj_set_size(kb, 480, 160);

@@ -6,7 +6,7 @@
 #include <WebServer.h>
 #include <WiFi.h>
 #include <deque>
-#define FIRMWARE_VERSION "1.3.0"
+#define FIRMWARE_VERSION "1.4.0"
 
 class NetworkManager {
 public:
@@ -57,6 +57,22 @@ public:
   int getTheme() { return _theme; }
   void setTheme(int theme) {
     _theme = theme;
+    saveSettings();
+  }
+
+  // Screensaver timeout in seconds (0 = disabled)
+  int getSSTimeout() { return _ssTimeout; }
+  void setSSTimeout(int s) {
+    _ssTimeout = s;
+    saveSettings();
+  }
+
+  // Screensaver dim brightness (0-255, default 20 ≈ 8%)
+  int getSSDimLevel() { return _ssDimLevel; }
+  void setSSDimLevel(int v) {
+    if (v < 0) v = 0;
+    if (v > 255) v = 255;
+    _ssDimLevel = v;
     saveSettings();
   }
 
@@ -166,10 +182,12 @@ private:
   int _toolCount = 1;
   int _selectedTool = 0;
   float _progress = 0;
-  uint32_t _pollInterval = 1500;
+  uint32_t _pollInterval = 500;
   uint32_t _lastUpdate = 0;
   uint8_t _queryIndex = 0;
   int _theme = 0;
+  int _ssTimeout = 30; // Screensaver timeout in seconds (0 = disabled)
+  int _ssDimLevel = 20; // Screensaver dim brightness 0-255
 
   int _activeAFCUnit = 0;
   int _unitCount = 1;
@@ -183,7 +201,10 @@ private:
   String _ntpServer = "pool.ntp.org";
   long _gmtOffset = 0;
   bool _ntpStarted = false;
-  bool _otaInProgress = false; // Track OTA upload to pause background tasks
+  bool _otaInProgress = false;
+  bool _firstCycleComplete = false; // Fast-poll until all 8 queries done
+  int  _queriesSinceConnect = 0;
+  uint32_t _dnsFailedMs = 0;        // millis() when DNS last failed; 30s backoff
 
   std::deque<String> _logs;
   WebServer _server{80};
