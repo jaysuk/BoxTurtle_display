@@ -31,6 +31,8 @@ void NetworkManager::loop() {
       Serial.print("WiFi Connected! IP: ");
       Serial.println(WiFi.localIP());
       _status = "Connected";
+      _dnsFailedMs = 0;   // Reset DNS backoff on fresh WiFi connection
+      _ipResolved = false; // Re-resolve hostname for new network session
       beginWebServer(); // Start server on connection
     } else if (currentStatus == WL_CONNECT_FAILED ||
                currentStatus == WL_NO_SSID_AVAIL) {
@@ -53,12 +55,13 @@ void NetworkManager::loop() {
       return;
     }
 
-    // Fast-poll on first connect until we've cycled through all 8 queries once
+    // Offline always uses slow poll so handleWebServer() gets enough time.
+    // Fast poll only applies when printer is reachable but data isn't loaded yet.
     uint32_t pollInterval = _pollInterval;
-    if (!_firstCycleComplete) {
-      pollInterval = 500; // 500ms between queries until initial data loaded
-    } else if (_status == "Offline") {
-      pollInterval = 5000; // Slower when printer is offline
+    if (_status == "Offline") {
+      pollInterval = 5000;
+    } else if (!_firstCycleComplete) {
+      pollInterval = 500; // Fast poll until all 8 queries done
     }
 
     if (millis() - _lastUpdate > pollInterval) {
@@ -581,8 +584,9 @@ void NetworkManager::updatePrinterStatus() {
   } else {
     // It's a hostname — resolve once and cache
     if (!_ipResolved || _cachedIP == IPAddress(0, 0, 0, 0)) {
-      // Backoff: don't call hostByName() if it failed recently (blocks ~8s)
-      if (_dnsFailedMs != 0 && (millis() - _dnsFailedMs) < 30000UL) {
+      // Backoff: don't call hostByName() if it failed recently (blocks ~8s).
+      // 5-minute backoff prevents the periodic 8s freeze pattern.
+      if (_dnsFailedMs != 0 && (millis() - _dnsFailedMs) < 300000UL) {
         _status = "Offline";
         return; // Still in backoff window — skip blocking DNS call
       }
